@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-class BuildingObj(object):
+class Building(object):
     def __init__(self, data):
         self.recipes = data['Recipes']
         self.build_costs = data['BuildingCosts']
@@ -24,7 +24,7 @@ class BuildingObj(object):
                                         self.scientist])) if self.production_building is True else np.nan
 
 
-class RecipeObj(object):
+class Recipe(object):
     def __init__(self, recipe_dict):
         self.building = None  # assign building later
         self.recipe = recipe_dict['RecipeName']
@@ -52,7 +52,7 @@ class RecipeObj(object):
         self.profit_margin = None
 
 
-class MaterialObj(object):
+class Material(object):
     def __init__(self, material_dict):
         self.category = material_dict['CategoryName']
         self.category_id = material_dict['CategoryId']
@@ -75,7 +75,7 @@ class MaterialObj(object):
         self.demand = None
 
 
-class StationObj(object):
+class Station(object):
     def __init__(self, data):
         self.nat_id = data['NaturalId']
         self.name = data['Name']
@@ -273,15 +273,15 @@ workforce_needs_data = fetch_data('workforce_needs', update=True)
 inventory_df = fetch_inventory(username, auth, update=True)
 
 # parse and classify all building data
-buildings = {b.ticker: b for b in [BuildingObj(b) for b in building_data]}
+buildings = {b.ticker: b for b in [Building(b) for b in building_data]}
 extractors, infrastructure_buildings, production_buildings = classify_buildings(buildings)
 all_production_buildings = merge(extractors, production_buildings)
 
 # parse all material data
-all_materials = {m.ticker: m for m in [MaterialObj(m) for m in materials_data]}
+all_materials = {m.ticker: m for m in [Material(m) for m in materials_data]}
 
 # parse all exchange station data, and count the number of active stations
-stations = {b.comex_code: b for b in [StationObj(s) for s in station_data]}
+stations = {b.comex_code: b for b in [Station(s) for s in station_data]}
 num_stations = len(station_data)
 
 # set prices for selected station as attributes of materials
@@ -329,7 +329,7 @@ building_df.level = building_df.level.map(level_dict)
 all_recipes = {}
 for b, building_recipes in recipes.items():
     for r in building_recipes:
-        info = RecipeObj(r)
+        info = Recipe(r)
         info.building = b
         all_recipes[info.recipe] = info
 
