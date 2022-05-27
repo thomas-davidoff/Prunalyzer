@@ -61,8 +61,8 @@ class Material(object):
         self.username_submitted = material_dict['UserNameSubmitted']
         self.timestamp = material_dict['Timestamp']
         '''assign the following attributes when you have price data'''
-        self.mm_buy = None
-        self.mm_sell = None
+        self.mm_buy = np.nan
+        self.mm_sell = np.nan
         self.price = None
         self.ask_count = None
         self.ask = None

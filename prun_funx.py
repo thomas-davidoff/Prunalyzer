@@ -8,7 +8,7 @@ auth = None
 username = None
 
 
-def fetch_data(keyword, authorization, update=False):
+def fetch_data(keyword, update=False):
     if update:
         # request headers - json content type and authorization dict
         my_headers = {'Accept': 'application/json', 'Authorization': auth}
@@ -19,7 +19,8 @@ def fetch_data(keyword, authorization, update=False):
             'prices': '/exchange/all',
             'materials': '/material/allmaterials',
             'stations': '/exchange/station',
-            'workforce needs': '/global/workforceneeds'
+            'workforce needs': '/global/workforceneeds',
+            'production':f'/production/{username}'
         }
         path = keywords_dict[keyword]
         url = base_url + path
@@ -37,34 +38,35 @@ def fetch_data(keyword, authorization, update=False):
 
 def parse(keyword, update=False, info=None) -> "parses json data (data_to_parse) from API":
     if keyword == 'buildings':
-        data = fetch_data(keyword, auth, update=update)
+        data = fetch_data(keyword, update=update)
         buildings = {b.ticker: b for b in [prun_classes.Building(b) for b in data]}
         extractors, infrastructure_buildings, production_buildings = classify_buildings(buildings)
         all_production_buildings = merge(extractors, production_buildings)
         return extractors, infrastructure_buildings, production_buildings, all_production_buildings, buildings
     elif keyword == 'materials':
-        data = fetch_data(keyword, auth, update=update)
+        data = fetch_data(keyword, update=update)
         all_materials = {m.ticker: m for m in [prun_classes.Material(m) for m in data]}
         return all_materials
     elif keyword == 'stations':
-        data = fetch_data(keyword, auth, update=update)
+        data = fetch_data(keyword, update=update)
         stations = {b.comex_code: b for b in [prun_classes.Station(s) for s in data]}
         num_stations = len(stations)
         station_list = list(stations.keys())
         return stations, num_stations, station_list
     elif keyword == 'prices':
-        data = fetch_data(keyword, auth, update=update)
-        prices = {p.ticker: p for p in [prun_classes.Price(p) for p in data]}
-        return prices
+        data = fetch_data(keyword, update=update)
+        price_df = pd.DataFrame(data).set_index('MaterialTicker')
+        prices = {p.ticker: p for p in [prun_classes.Price(p) for p in data]}  # ticker includes exchange code
+        return prices, price_df
     elif keyword == 'workforce needs':
-        data = fetch_data(keyword, auth, update=update)
+        data = fetch_data(keyword, update=update)
         wf_needs = {w.workforce_type.lower(): w for w in [prun_classes.WorkforceRequirement(w) for w in data]}
         wf_needs_df = pd.DataFrame([w.needs for w in wf_needs.values()], index=[w for w in wf_needs.keys()])
         wf_needs_df.loc['total'] = wf_needs_df.sum()
         return wf_needs_df
     elif keyword == 'recipes':
         all_recipes = {}
-        for building, b in info.items():
+        for building, b in info.items():  # info is production_buildings dict
             recipes = b.recipes
             for r in recipes:
                 recipe_info = prun_classes.Recipe(r)
@@ -126,6 +128,13 @@ def parse(keyword, update=False, info=None) -> "parses json data (data_to_parse)
         """Can access a dataframe of the building material costs by indexing buildcost by ticker"""
         buildcost_df = pd.DataFrame(buildcost).T
         return buildcost_df
+    elif keyword == 'planets':
+        placeholder = 'placeholder'
+        return placeholder
+    elif keyword == 'production':
+        data = fetch_data('production',update=update)
+        placeholder = 'my production will be here soon'
+        return placeholder
     else:
         print('Keyword is not in list.')
 
@@ -159,8 +168,8 @@ def setprices(station, material_dict, price_dict):
     station_string = f'.{station}'
 
     for material_ticker, material_object in material_dict.items():
+        mat_cx = material_ticker + station_string
         try:
-            mat_cx = material_ticker + station_string
             material_dict[material_ticker].price = price_dict[mat_cx].price
             material_dict[material_ticker].mm_buy = price_dict[mat_cx].mm_buy
             material_dict[material_ticker].mm_sell = price_dict[mat_cx].mm_sell
@@ -172,6 +181,15 @@ def setprices(station, material_dict, price_dict):
             material_dict[material_ticker].demand = price_dict[mat_cx].demand
         except:
             print(f'Could not find {mat_cx} in price_dict')
+            material_dict[material_ticker].price = np.nan
+            material_dict[material_ticker].mm_buy = np.nan
+            material_dict[material_ticker].mm_sell =np.nan
+            material_dict[material_ticker].ask_count = np.nan
+            material_dict[material_ticker].ask = np.nan
+            material_dict[material_ticker].supply = np.nan
+            material_dict[material_ticker].bid_count = np.nan
+            material_dict[material_ticker].bid = np.nan
+            material_dict[material_ticker].demand = np.nan
 
 
 '''Level dict below is used to translate the level number to the corresponding title'''
@@ -192,6 +210,11 @@ def calc_recipe_profit(recipe_dict, material_dict, building_dict) -> 'Creates a 
         output_prices = [material_dict[i].price for i in outputs]
         o_demand = np.array([material_dict[o].demand for o in outputs])
         mindemand = np.min(o_demand)
+        o_mm = np.array([material_dict[o].mm_buy for o in outputs if material_dict[o].mm_buy is not None])
+        if len(o_mm) > 0:
+            min_mm = np.nanmin(o_mm)
+        else:
+            min_mm = np.nan
         if num_inputs > 0:
             i_supply = np.array([material_dict[i].supply for i in inputs])
             minsupply = np.min(i_supply)
@@ -236,7 +259,8 @@ def calc_recipe_profit(recipe_dict, material_dict, building_dict) -> 'Creates a 
             'input_supply (min)': minsupply,
             'num_inputs': num_inputs,
             'num_outputs': num_outputs,
-            'duration (s)': duration
+            'duration (s)': duration,
+            'mmbid':min_mm
         }
 
         dfrows.append(row)
