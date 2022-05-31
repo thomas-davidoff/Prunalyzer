@@ -116,3 +116,12 @@ class WorkforceRequirement(object):
     def __init__(self, data):
         self.workforce_type = data['WorkforceType']
         self.needs = {n['MaterialTicker']: n['Amount'] for n in data['Needs']}
+
+
+class Planet(object):
+    def __init__(self, datapoint):
+        self.planet = datapoint['Planet']
+        self.name = None
+        self.resources = [datapoint['Ticker']]
+        self.resource_types = [datapoint['Type']]
+        self.resource_factors = [datapoint['Factor']]

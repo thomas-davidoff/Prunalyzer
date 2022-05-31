@@ -1,8 +1,9 @@
-import prun_funx
 
-username, auth = input("Enter Username"), input("Enter API authorization hash")
+import prun_funx
+# username, auth = input("Enter Username"), input("Enter API authorization hash")
+username, auth = 'Dinglebop', '4eab7b52-a846-4346-a122-871c8553c85b'
 prun_funx.username, prun_funx.auth = username, auth
-reload = True
+reload = False
 
 extractors, infrastructure, production_buildings, all_production_buildings, buildings = prun_funx.parse('buildings',
                                                                                                         update=reload)

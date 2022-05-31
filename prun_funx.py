@@ -20,17 +20,19 @@ def fetch_data(keyword, update=False):
             'materials': '/material/allmaterials',
             'stations': '/exchange/station',
             'workforce needs': '/global/workforceneeds',
-            'production':f'/production/{username}'
+            'production': f'/production/{username}',
+            'planet_resources': '/rain/planetresources',
+            'planet_names':'/planet/allplanets'
         }
         path = keywords_dict[keyword]
         url = base_url + path
         data = requests.get(url, headers=my_headers).json()
         json_string = json.dumps(data)
-        file_title = f'{keyword}.json'
+        file_title = f'example_data/{keyword}.json'
         with open(file_title, 'w') as f:
             f.write(json_string)
     else:
-        f = open(f'{keyword}.json')
+        f = open(f'example_data/{keyword}.json')
         data = json.load(f)
 
     return data
@@ -46,7 +48,8 @@ def parse(keyword, update=False, info=None) -> "parses json data (data_to_parse)
     elif keyword == 'materials':
         data = fetch_data(keyword, update=update)
         all_materials = {m.ticker: m for m in [prun_classes.Material(m) for m in data]}
-        return all_materials
+        material_list = [k for k in all_materials.keys()]
+        return all_materials, material_list
     elif keyword == 'stations':
         data = fetch_data(keyword, update=update)
         stations = {b.comex_code: b for b in [prun_classes.Station(s) for s in data]}
@@ -128,11 +131,25 @@ def parse(keyword, update=False, info=None) -> "parses json data (data_to_parse)
         """Can access a dataframe of the building material costs by indexing buildcost by ticker"""
         buildcost_df = pd.DataFrame(buildcost).T
         return buildcost_df
-    elif keyword == 'planets':
-        placeholder = 'placeholder'
-        return placeholder
+    elif keyword == 'planet_resources':
+        resources_data = fetch_data(keyword, update=update)
+        name_dict = {p['PlanetNaturalId']:p['PlanetName'] for p in fetch_data('planet_names',update=update)}
+        ids = [p['Planet'] for p in resources_data]
+        names = [name_dict[p] for p in ids]
+        resources = [p['Ticker'] for p in resources_data]
+        types = [p['Type'] for p in resources_data]
+        factors = [p['Factor'] for p in resources_data]
+        pr = pd.DataFrame({
+            'natural_id':ids,
+            'name':names,
+            'resource':resources,
+            'type': types,
+            'factor': factors,
+        }).set_index('natural_id')
+        pr['per_day'] = np.where(pr['type']=='GASEOUS',pr['factor']*60,pr['factor']*70)
+        return pr
     elif keyword == 'production':
-        data = fetch_data('production',update=update)
+        data = fetch_data('production', update=update)
         placeholder = 'my production will be here soon'
         return placeholder
     else:
@@ -183,7 +200,7 @@ def setprices(station, material_dict, price_dict):
             print(f'Could not find {mat_cx} in price_dict')
             material_dict[material_ticker].price = np.nan
             material_dict[material_ticker].mm_buy = np.nan
-            material_dict[material_ticker].mm_sell =np.nan
+            material_dict[material_ticker].mm_sell = np.nan
             material_dict[material_ticker].ask_count = np.nan
             material_dict[material_ticker].ask = np.nan
             material_dict[material_ticker].supply = np.nan
@@ -260,7 +277,7 @@ def calc_recipe_profit(recipe_dict, material_dict, building_dict) -> 'Creates a 
             'num_inputs': num_inputs,
             'num_outputs': num_outputs,
             'duration (s)': duration,
-            'mmbid':min_mm
+            'mmbid': min_mm
         }
 
         dfrows.append(row)
@@ -272,7 +289,7 @@ def calc_recipe_profit(recipe_dict, material_dict, building_dict) -> 'Creates a 
 
 
 def fetch_inventory(update=False):
-    f = 'inventory.csv'
+    f = 'example_data/inventory.csv'
     if update:
         url = f'https://rest.fnar.net/csv/inventory?apikey={auth}&username={username}'
         my_headers = {'Accept': 'application/csv'}
@@ -288,6 +305,7 @@ def fetch_inventory(update=False):
 
     return data
 
+
 # function to simulate excel auto-fit columns
 def get_col_widths(dataframe):
     # First we find the maximum length of the index column
@@ -297,8 +315,8 @@ def get_col_widths(dataframe):
 
 
 # function to save data to excel
-def update_excel(dfs_to_write) -> 'Sends to excel':
-    with pd.ExcelWriter("all_info.xlsx", engine='xlsxwriter') as writer:
+def update_excel(dfs_to_write, file_name) -> 'Sends to excel':
+    with pd.ExcelWriter(file_name, engine='xlsxwriter') as writer:
         for df_name, df in dfs_to_write.items():
             df.to_excel(writer, sheet_name=df_name, index=True)
             worksheet = writer.sheets[df_name]
@@ -313,11 +331,90 @@ def update_excel(dfs_to_write) -> 'Sends to excel':
             for i, width in enumerate(get_col_widths(df)):
                 worksheet.set_column(i, i, width + 2.5)
 
+
 def materials_df_create(mat_dict):
     return pd.DataFrame([[mat.ticker, mat.name, mat.ask, mat.ask_count, mat.bid, mat.bid_count, mat.category,
-                                  mat.category_id, mat.demand, mat.mat_id, mat.mm_buy, mat.mm_sell, mat.price,
-                                  mat.supply,
-                                  mat.timestamp, mat.volume, mat.weight] for mat in mat_dict.values()],
-                                columns=['ticker', 'name', 'ask', 'ask_count', 'bid', 'bid_count', 'category',
-                                         'category_id', 'demand', 'mat_id', 'mm_buy', 'mm_sell', 'price', 'supply',
-                                         'timestamp', 'volume', 'weight']).set_index('ticker')
+                          mat.category_id, mat.demand, mat.mat_id, mat.mm_buy, mat.mm_sell, mat.price,
+                          mat.supply,
+                          mat.timestamp, mat.volume, mat.weight] for mat in mat_dict.values()],
+                        columns=['ticker', 'name', 'ask', 'ask_count', 'bid', 'bid_count', 'category',
+                                 'category_id', 'demand', 'mat_id', 'mm_buy', 'mm_sell', 'price', 'supply',
+                                 'timestamp', 'volume', 'weight']).set_index('ticker')
+
+
+def find_arbitrage(station_list, material_list,materials,prices):
+    print('Creating material arbitrage df')
+    arbitrage_list = []
+    for station in station_list:
+        start = station
+        ends = [s for s in station_list if s != start]
+        for end in ends:
+            '''create list to convert to pd.Series and append to arbitrage DataFrane
+            arbitrage df will have first three columns sharing indexes, with each row representing a unique combination
+            of starting and ending exchanges for all materials.
+
+            This could not be accomplished in a list comprehension because of too much variability between the
+            material datasets and their relevant prices. For example, the ticker 'CMK.NC1' does not appear in the
+            price dictionary when setting prices, and thus does not appear in the prices dictionary. This is because
+            when building the prices dictionary I used another dictionary comprehension to create objects out of all
+            the materials and could not account for missing/variable values'''
+            start_average_array, end_average_array, start_ask_array, end_bid_array = [], [], [], []
+            start_supply, end_demand, weight, volume = [], [], [], []
+
+            for m in material_list:
+                start_ticker = f'{m}.{start}'
+                end_ticker = f'{m}.{end}'
+                weight.append(materials[m].weight)
+                volume.append(materials[m].volume)
+
+                if start_ticker in prices:
+                    start_average_array.append(prices[start_ticker].price)
+                    start_supply.append(prices[start_ticker].supply)
+                    start_ask_array.append(prices[start_ticker].ask)
+                else:
+                    start_average_array.append(np.nan)
+                    start_supply.append(np.nan)
+                    start_ask_array.append(np.nan)
+                if end_ticker in prices:
+                    end_average_array.append(prices[end_ticker].price)
+                    end_bid_array.append(prices[end_ticker].bid)
+                    end_demand.append(prices[end_ticker].demand)
+                else:
+                    end_average_array.append(np.nan)
+                    end_bid_array.append(np.nan)
+                    end_demand.append(np.nan)
+
+            df_to_add = pd.DataFrame({'start': start,
+                                      'end': end,
+                                      'material': material_list,
+                                      'startAverage': start_average_array,
+                                      'startAsk': start_ask_array,
+                                      'startSupply': start_supply,
+                                      'endAverage': end_average_array,
+                                      'endBid': end_bid_array,
+                                      'endDemand': end_demand,
+                                      'weight': weight,
+                                      'volume': volume
+                                      })
+            arbitrage_list.append(df_to_add)
+    arbitrage_df = pd.concat(arbitrage_list)
+    spread_factor = 0.1
+    volume_factor = 100
+    cargo_capacity = 500
+
+    arbitrage_df['Status'] = 'Normal'
+    reliability_filter = (arbitrage_df.startAverage * (1 - spread_factor) < arbitrage_df.startAsk) & (
+            arbitrage_df.startAverage * (1 + spread_factor) > arbitrage_df.startAsk) & (
+                                 arbitrage_df.endAverage * (1 - spread_factor) < arbitrage_df.endBid) & (
+                                 arbitrage_df.endAverage * (1 + spread_factor) > arbitrage_df.endBid)
+    profitable_reliable_filter = reliability_filter & (arbitrage_df['startAsk'] < arbitrage_df['endBid'])
+    arbitrage_df.loc[~reliability_filter, 'Status'] = 'Off Average'
+    arbitrage_df.loc[profitable_reliable_filter, 'Status'] = 'ARBITRAGE'
+    volume_filter = (arbitrage_df.startSupply > volume_factor) & (arbitrage_df.endDemand > volume_factor)
+
+    arbitrage_df['Profit'] = arbitrage_df['endBid'] - arbitrage_df['startAsk']
+    arbitrage_df['ProfitMargin'] = arbitrage_df['Profit'] / arbitrage_df['endBid']
+    arbitrage_df['ProfitFullCargo'] = arbitrage_df['Profit'] * (cargo_capacity / arbitrage_df['weight'])
+    volume_profit_filter = volume_filter & (arbitrage_df.Profit > 0)
+    arbitrage_df = arbitrage_df.loc[volume_profit_filter]
+    return arbitrage_df
