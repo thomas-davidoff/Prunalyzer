@@ -1,0 +1,108 @@
+footer {visibility: hidden;}
+
+/*td, th {
+    border-style : hidden!important;
+    text-align: left;
+    height: inherit;
+}
+*/
+
+
+tbody th {display:none}
+.blank {display:none}
+
+table {
+    font-size:14px!important;
+}
+
+
+/*main body div (not sidebar)*/
+.css-12oz5g7 {
+    flex: 1 1 0%;
+    width: 100%;
+    padding: 6rem 1rem 5rem;
+    max-width: 90rem;
+}
+
+.material-table {
+    border-spacing: 5px;
+    border-collapse: separate;
+}
+
+td, th {
+    border: none!important;
+}
+
+.material {
+    width:4.5em;
+    height: 4.5em;
+    text-align:center;
+}
+
+.ores {
+    background: linear-gradient(135deg, rgb(82, 87, 97), rgb(107, 112, 122))
+}
+
+.minerals {
+    background: linear-gradient(135deg, rgb(153, 113, 73), rgb(178, 138, 98))
+}
+
+.gases {
+    background: linear-gradient(135deg, rgb(0, 105, 107), rgb(25, 130, 132))
+}
+
+.liquids {
+    background: linear-gradient(135deg, rgb(114, 164, 202), rgb(139, 189, 227))
+}
+
+.alloys {
+    background: linear-gradient(135deg, rgb(123, 76, 30), rgb(148, 101, 55))
+}
+
+.ship_engines {
+    background: linear-gradient(135deg,rgb(123, 76, 30) , rgb(148, 101, 55))
+}
+
+.plastics {
+    background: linear-gradient(135deg,rgb(123, 76, 30) ,rgb(148, 101, 55) )
+}
+
+.chemicals {
+    background: linear-gradient(135deg,rgb(183, 46, 91) , rgb(208, 71, 116))
+}
+
+.elements {
+    background: linear-gradient(135deg, rgb(123, 76, 30), rgb(148, 101, 55))
+}
+
+.metals {
+    background: linear-gradient(135deg,rgb(123, 76, 30) , rgb(148, 101, 55))
+}
+
+.electronic_pieces {
+    background: linear-gradient(135deg,rgb(123, 76, 30) , rgb(148, 101, 55))
+}
+
+.ship_parts {
+    background: linear-gradient(135deg,rgb(123, 76, 30) , rgb(148, 101, 55))
+}
+
+.ship_kits {
+    background: linear-gradient(135deg,rgb(123, 76, 30) ,rgb(148, 101, 55) )
+}
+
+.software_systems {
+    background: linear-gradient(135deg,rgb(123, 76, 30) , rgb(148, 101, 55))
+}
+
+.electronic_parts {
+    background: linear-gradient(135deg, , )
+}
+
+.utility {
+    background: linear-gradient(135deg, , )
+}
+
+.agricultural_products {
+    background: linear-gradient(135deg, , )
+}
