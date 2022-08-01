@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="3857ac31-1947-430f-8c32-4a7bcc07342f" name="Default Changelist" comment="clean up .idea" />
+    <list default="true" id="3857ac31-1947-430f-8c32-4a7bcc07342f" name="Default Changelist" comment=".idea">
+      <change beforePath="$PROJECT_DIR$/styles_import.py" beforeDir="false" afterPath="$PROJECT_DIR$/styles_import.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -274,7 +276,14 @@
       <option name="project" value="LOCAL" />
       <updated>1659323201539</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary=".idea">
+      <created>1659323393853</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1659323393853</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -297,6 +306,7 @@
     <MESSAGE value="Complete overhaul. Smaller changes from here on out." />
     <MESSAGE value="Ignores .pyc" />
     <MESSAGE value="clean up .idea" />
-    <option name="LAST_COMMIT_MESSAGE" value="clean up .idea" />
+    <MESSAGE value=".idea" />
+    <option name="LAST_COMMIT_MESSAGE" value=".idea" />
   </component>
 </project>

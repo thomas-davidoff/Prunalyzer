@@ -1,10 +1,7 @@
-import cssutils
 import streamlit as st
 
 with open('local.css') as f:
     content = f.read()
-
-
 
 def local_css(file):
     with open(file) as f:
