@@ -9,7 +9,6 @@
 
  Future features (to-do):
   - Inventory Tracking (calculate material burn rate, create inventory graphs; use to schedule cargo-transfer flights/sales)
-  - 	Organize user production queues, and set production schedule
-  - 	Allow user to experiment with production by changing schedules and seeing impact on financials
+  - Organize user production queues, and set production schedule
+  - Allow user to experiment with production by changing schedules and seeing impact on financials
   - Analyze price data across commodity exchanges to calculate the collective 'buying' power of each currency
-  - 
